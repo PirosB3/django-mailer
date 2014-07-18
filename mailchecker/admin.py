@@ -3,7 +3,7 @@ from .models import Thread
 
 
 class ThreadAdmin(admin.ModelAdmin):
-    fields = ('id',)
+    fields = ('number_of_messages',)
     list_display = ('id',)
     ordering = ('id',)
 

@@ -1,4 +1,4 @@
-from django.db.models.fields import AutoField, FieldDoesNotExist
+from django.db.models.fields import AutoField, CharField, FieldDoesNotExist
 from django.conf import settings
 
 from oauth2client.file import Storage
@@ -17,20 +17,28 @@ class ThreadOptions(object):
     virtual_fields = []
 
     def __init__(self):
+
         self.af = AutoField()
         self.af.attname = 'id'
         self.af.name = 'id'
+
+        self.number_of_messages = CharField(max_length=200)
+        self.number_of_messages.attname = 'number_of_messages'
+        self.number_of_messages.name = 'number_of_messages'
+
         self.pk = self.af
 
     def get_fields(self, m2m=False, data=True, related_m2m=False, related_objects=False, virtual=False,
                    include_parents=True, include_non_concrete=True, include_hidden=False, include_proxy=False, export_name_map=False):
         if data:
-            return (self.af,)
+            return (self.af, self.number_of_messages)
         return tuple()
 
     def get_field(self, field_name, m2m=True, data=True, related_objects=False, related_m2m=False, virtual=True, **kwargs):
         if field_name == 'id':
             return self.af
+        if field_name == 'number_of_messages':
+            return self.number_of_messages
         raise FieldDoesNotExist()
 
     @property
