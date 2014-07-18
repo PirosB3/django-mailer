@@ -2,8 +2,7 @@ from django.db.models.fields import FieldDoesNotExist
 import mailer
 
 from .options import ThreadOptions, MessageOptions
-from .manager import ThreadManager
-from .query import ThreadQuerySet
+from .manager import ThreadManager, MessageManager
 
 
 
@@ -31,4 +30,4 @@ Thread._meta = ThreadOptions()
 Thread._default_manager = ThreadManager(Thread)
 
 Message._meta = MessageOptions()
-#Message._default_manager = ThreadManager()
+Message._default_manager = MessageManager(Message)

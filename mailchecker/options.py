@@ -104,6 +104,7 @@ class MessageOptions(GmailOptions):
     def get_field(self, field_name, m2m=True, data=True, related_objects=False, related_m2m=False, virtual=True, **kwargs):
         if data:
             m = {
+                'id': self.af,
                 'receiver': self.receiver,
                 'sender': self.sender,
                 'body': self.body,

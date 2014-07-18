@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Thread
+from .models import Thread, Message
 
 
 class ThreadAdmin(admin.ModelAdmin):
@@ -7,4 +7,12 @@ class ThreadAdmin(admin.ModelAdmin):
     list_display = ('id',)
     ordering = ('id',)
 
+
+class MessageAdmin(admin.ModelAdmin):
+    fields = ('sender', 'receiver', 'body')
+    list_display = ('id',)
+    ordering = ('id',)
+
+
+admin.site.register([Message], MessageAdmin)
 admin.site.register([Thread], ThreadAdmin)
