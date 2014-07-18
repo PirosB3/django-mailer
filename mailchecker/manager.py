@@ -21,4 +21,6 @@ class ThreadManager(GmailManager):
 
 
 class MessageManager(GmailManager):
-    pass
+
+    def get_queryset(self):
+        return ThreadQuerySet([], credentials=self.credentials, model=self.model)

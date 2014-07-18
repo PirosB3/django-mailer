@@ -35,6 +35,7 @@ def _get_gmail_service(credentials):
 
 
 def _make_message(msg):
+    import ipdb; ipdb.set_trace()
     body = ''.join(base64.urlsafe_b64decode(p['body']['data'].encode('utf-8')) for p in msg['payload']['parts'])
     sender = [h['value'] for h in msg['payload']['headers'] if h['name'] == 'From'][0]
     receiver = [h['value'] for h in msg['payload']['headers'] if h['name'] == 'To'][0]
@@ -62,6 +63,14 @@ def get_all_threads(credentials):
         userId=ME,
     ).execute()['threads']
     return tuple(Thread(id=t['id'], number_of_messages=None) for t in threads)
+
+
+def get_all_messages(credentials):
+    gmail = _get_gmail_service(credentials)
+    messages = gmail.users().messages().list(
+        userId=ME,
+    ).execute()['messages']
+    return tuple(_make_message(m) for m in messages)
 
 
 def get_thread_by_id(credentials, thread_id):
