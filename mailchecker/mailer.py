@@ -35,12 +35,12 @@ def _get_gmail_service(credentials):
 
 
 def _make_message(msg):
-    import ipdb; ipdb.set_trace()
     body = ''.join(base64.urlsafe_b64decode(p['body']['data'].encode('utf-8')) for p in msg['payload']['parts'])
     sender = [h['value'] for h in msg['payload']['headers'] if h['name'] == 'From'][0]
     receiver = [h['value'] for h in msg['payload']['headers'] if h['name'] == 'To'][0]
     return Message(
         id=msg['id'],
+        thread_id=msg['threadId'],
         receiver=receiver,
         sender=sender,
         body=body

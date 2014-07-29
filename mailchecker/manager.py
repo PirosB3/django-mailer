@@ -2,7 +2,7 @@ from oauth2client.file import Storage
 from django.conf import settings
 import mailer
 
-from .query import ThreadQuerySet
+from .query import ThreadQuerySet, MessageQuerySet
 
 class GmailManager(object):
     def __init__(self, model):
@@ -23,4 +23,4 @@ class ThreadManager(GmailManager):
 class MessageManager(GmailManager):
 
     def get_queryset(self):
-        return ThreadQuerySet([], credentials=self.credentials, model=self.model)
+        return MessageQuerySet([], credentials=self.credentials, model=self.model)

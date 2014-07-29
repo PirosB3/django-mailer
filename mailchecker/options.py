@@ -1,5 +1,11 @@
 from django.db.models.fields import AutoField, CharField, FieldDoesNotExist, TextField
 
+
+class GmailAutoField(AutoField):
+
+    def to_python(self, value):
+        return value
+
 class GmailOptions(object):
     abstract = False
     swapped = False
@@ -43,7 +49,7 @@ class ThreadOptions(GmailOptions):
     def __init__(self):
 
 
-        self.af = AutoField()
+        self.af = GmailAutoField()
         self.af.attname = 'id'
         self.af.name = 'id'
 
@@ -76,7 +82,7 @@ class MessageOptions(GmailOptions):
     object_name = 'message'
 
     def __init__(self):
-        self.af = AutoField()
+        self.af = GmailAutoField()
         self.af.attname = 'id'
         self.af.name = 'id'
 
@@ -85,8 +91,8 @@ class MessageOptions(GmailOptions):
         self.receiver.name = 'receiver'
 
         self.sender = CharField(max_length=200)
-        self.sender.attname = 'receiver'
-        self.sender.name = 'receiver'
+        self.sender.attname = 'sender'
+        self.sender.name = 'sender'
 
         self.body = TextField()
         self.body.attname = 'body'
