@@ -1,5 +1,5 @@
 from django.db.models.fields import AutoField, CharField, FieldDoesNotExist, TextField
-
+from django.db.models import ForeignKey
 
 class GmailAutoField(AutoField):
 
@@ -10,7 +10,6 @@ class GmailOptions(object):
     abstract = False
     swapped = False
     virtual_fields = []
-
 
     @property
     def many_to_many(self):
@@ -45,9 +44,12 @@ class ThreadOptions(GmailOptions):
     verbose_name_raw = 'thread'
     verbose_name_plural = 'threads'
     object_name = 'thread'
+    default_related_name = None
 
-    def __init__(self):
+    def add_field(self, *args, **kwargs):
+        pass
 
+    def _bind(self):
 
         self.af = GmailAutoField()
         self.af.attname = 'id'
@@ -61,9 +63,13 @@ class ThreadOptions(GmailOptions):
 
     def get_fields(self, m2m=False, data=True, related_m2m=False, related_objects=False, virtual=False,
                    include_parents=True, include_non_concrete=True, include_hidden=False, include_proxy=False, export_name_map=False):
+        res = []
         if data:
-            return (self.af, self.number_of_messages)
-        return tuple()
+            res += [self.af, self.number_of_messages]
+        if related_objects:
+            from .models import Message
+            res += [Message._meta.get_field('thread').related]
+        return res
 
     def get_field(self, field_name, m2m=True, data=True, related_objects=False, related_m2m=False, virtual=True, **kwargs):
         if field_name == 'id':
@@ -80,8 +86,12 @@ class MessageOptions(GmailOptions):
     verbose_name_raw = 'message'
     verbose_name_plural = 'messages'
     object_name = 'message'
+    default_related_name = None
 
-    def __init__(self):
+    def add_field(self, *args, **kwargs):
+        pass
+
+    def _bind(self):
         self.af = GmailAutoField()
         self.af.attname = 'id'
         self.af.name = 'id'
@@ -98,13 +108,18 @@ class MessageOptions(GmailOptions):
         self.body.attname = 'body'
         self.body.name = 'body'
 
+        from .models import Thread
+        from .models import Message
+        self.thread = ForeignKey(Thread)
+        self.thread.contribute_to_class(Message, 'thread')
+
         self.pk = self.af
 
 
     def get_fields(self, m2m=False, data=True, related_m2m=False, related_objects=False, virtual=False,
                    include_parents=True, include_non_concrete=True, include_hidden=False, include_proxy=False, export_name_map=False):
         if data:
-            return (self.af, self.receiver, self.sender, self.body)
+            return (self.af, self.receiver, self.sender, self.body, self.thread)
         return tuple()
 
     def get_field(self, field_name, m2m=True, data=True, related_objects=False, related_m2m=False, virtual=True, **kwargs):
@@ -114,6 +129,7 @@ class MessageOptions(GmailOptions):
                 'receiver': self.receiver,
                 'sender': self.sender,
                 'body': self.body,
+                'thread': self.thread,
             }
             try:
                 return m[field_name]

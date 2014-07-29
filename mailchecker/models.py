@@ -20,14 +20,25 @@ class GmailModel(object):
             return getattr(self, field_name)
         return getattr(self, field.attname)
 
-class Thread(GmailModel):
-    pass
+
+class constructor(type):
+    def __new__(cls, name, bases, attrs):
+        dm = attrs.pop('_default_manager')
+        klass = super(constructor, cls).__new__(cls, name, bases, attrs)
+        klass._default_manager = dm(klass)
+        return klass
+
 
 class Message(GmailModel):
-    pass
+    __metaclass__ = constructor
+    _default_manager = MessageManager
+    _meta = MessageOptions()
 
-Thread._meta = ThreadOptions()
-Thread._default_manager = ThreadManager(Thread)
 
-Message._meta = MessageOptions()
-Message._default_manager = MessageManager(Message)
+class Thread(GmailModel):
+    __metaclass__ = constructor
+    _default_manager = ThreadManager
+    _meta = ThreadOptions()
+
+Thread._meta._bind()
+Message._meta._bind()
