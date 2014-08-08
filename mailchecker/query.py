@@ -7,7 +7,12 @@ class GmailQuery(object):
 
 
 class GmailQuerySet(list):
+
+    def using(self, db):
+        return self
+
     def __init__(self, *args, **kwargs):
+        self.ordered = True
         self.model = kwargs.pop('model')
         self.credentials = kwargs.pop('credentials')
         super(GmailQuerySet, self).__init__(*args, **kwargs)
@@ -33,6 +38,41 @@ class ThreadQuerySet(GmailQuerySet):
 
 
 class MessageQuerySet(GmailQuerySet):
+
+    def __init__(self, *args, **kwargs):
+        self.selected_thread = kwargs.pop('selected_thread', None)
+        super(MessageQuerySet, self).__init__(*args, **kwargs)
+
+    def filter(self, *args, **kwargs):
+        selected_thread = kwargs.pop('thread', None)
+        if selected_thread:
+            return MessageQuerySet(
+                model=self.model,
+                credentials=self.credentials,
+                selected_thread=selected_thread
+            )
+        return self
+
+    def count(self):
+        return 5
+
+    def __len__(self):
+        return len([k for k in self])
+
+    def __getitem__(self, n):
+        return [k for k in self][n]
+
+    def __iter__(self):
+        if not self.selected_thread:
+            return super(MessageQuerySet, self).__iter__()
+
+        messages = mailer.get_messages_by_thread_id(
+            self.credentials,
+            self.selected_thread.id
+        )
+        for m in messages:
+            m._meta = self.model._meta
+        return iter(messages)
 
     def get(self, *args, **kwargs):
         message_id = kwargs['pk']

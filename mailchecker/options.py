@@ -7,6 +7,8 @@ class GmailAutoField(AutoField):
         return value
 
 class GmailOptions(object):
+    has_auto_field = True
+    auto_created = False
     abstract = False
     swapped = False
     virtual_fields = []
@@ -38,6 +40,7 @@ class GmailOptions(object):
 
 
 class ThreadOptions(GmailOptions):
+    auto_created = False
     app_label = 'mailchecker'
     model_name = 'thread'
     verbose_name = 'thread'
@@ -112,6 +115,8 @@ class MessageOptions(GmailOptions):
         from .models import Message
         self.thread = ForeignKey(Thread)
         self.thread.contribute_to_class(Message, 'thread')
+
+        self.concrete_model = Message
 
         self.pk = self.af
 
