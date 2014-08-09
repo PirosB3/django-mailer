@@ -63,6 +63,11 @@ class MessageQuerySet(GmailQuerySet):
         return [k for k in self][n]
 
     def __iter__(self):
+        try:
+            return iter(self._cache)
+        except AttributeError:
+            pass
+
         if not self.selected_thread:
             return super(MessageQuerySet, self).__iter__()
 
@@ -72,6 +77,7 @@ class MessageQuerySet(GmailQuerySet):
         )
         for m in messages:
             m._meta = self.model._meta
+        self._cache = messages
         return iter(messages)
 
     def get(self, *args, **kwargs):

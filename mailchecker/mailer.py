@@ -35,7 +35,12 @@ def _get_gmail_service(credentials):
 
 
 def _make_message(msg):
-    body = ''.join(base64.urlsafe_b64decode(p['body']['data'].encode('utf-8')) for p in msg['payload']['parts'])
+    try:
+        parts = [p['body'] for p in msg['payload']['parts']]
+    except KeyError:
+        parts = [msg['payload']['body']]
+
+    body = ''.join(base64.urlsafe_b64decode(p['data'].encode('utf-8')) for p in parts)
     sender = [h['value'] for h in msg['payload']['headers'] if h['name'] == 'From'][0]
     receiver = [h['value'] for h in msg['payload']['headers'] if h['name'] == 'To'][0]
     return Message(
