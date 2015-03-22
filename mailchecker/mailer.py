@@ -43,8 +43,10 @@ def _make_message(msg):
 
     body = ''.join(base64.urlsafe_b64decode(p['data'].encode('utf-8'))
                    for p in parts if 'data' in p)
-    sender = [h['value'] for h in msg['payload']['headers'] if h['name'] == 'From'][0]
-    receiver = [h['value'] for h in msg['payload']['headers'] if h['name'] == 'To'][0]
+    sender = [h['value'] for h in msg['payload']['headers']
+              if h['name'] == 'From'][0]
+    receiver = [h['value'] for h in msg['payload']['headers']
+                if h['name'] == 'To'][0]
     return Message(
         id=msg['id'],
         thread_id=msg['threadId'],
