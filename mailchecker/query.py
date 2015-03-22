@@ -31,9 +31,10 @@ class GmailQuerySet(list):
 class ThreadQuerySet(GmailQuerySet):
 
     def get(self, *args, **kwargs):
-        thread_id = kwargs['pk']
+        thread_id = kwargs['id']
         thread = mailer.get_thread_by_id(self.credentials, thread_id)
         thread._meta = self.model._meta
+        thread._state = self.model._state
         return thread
 
 
@@ -77,6 +78,7 @@ class MessageQuerySet(GmailQuerySet):
         )
         for m in messages:
             m._meta = self.model._meta
+            m._state = self.model._state
         self._cache = messages
         return iter(messages)
 

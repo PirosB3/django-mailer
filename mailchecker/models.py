@@ -1,21 +1,20 @@
 from django.db.models.fields import FieldDoesNotExist
-import mailer
+from django.db.models.base import ModelState
 
 from .options import ThreadOptions, MessageOptions
 from .manager import ThreadManager, MessageManager
 
 
-
 class GmailModel(object):
     _deferred = False
+    _state = ModelState()
 
     def __unicode__(self):
         return self.id
 
     def serializable_value(self, field_name):
         try:
-            field = self._meta.get_field(field_name, m2m=True, related_objects=True,
-                                         related_m2m=True, virtual=True)
+            field = self._meta.get_field(field_name)
         except FieldDoesNotExist:
             return getattr(self, field_name)
         return getattr(self, field.attname)

@@ -1,42 +1,22 @@
-from django.db.models.fields import AutoField, CharField, FieldDoesNotExist, TextField
+from django.db.models.fields import (AutoField, CharField,
+                                     FieldDoesNotExist, TextField)
 from django.db.models import ForeignKey
+from django.db.models.fields import FieldDoesNotExist
+from django.db.models.options import CachedPropertiesMixin
+
 
 class GmailAutoField(AutoField):
-
+    concrete = True
     def to_python(self, value):
         return value
 
-class GmailOptions(object):
+
+class GmailOptions(CachedPropertiesMixin):
     has_auto_field = True
     auto_created = False
     abstract = False
     swapped = False
     virtual_fields = []
-
-    @property
-    def many_to_many(self):
-        return list(self.get_fields(data=False, m2m=True))
-
-    @property
-    def field_names(self):
-        res = set()
-        for _, names in self.get_fields(m2m=True, related_objects=True,
-                                        related_m2m=True, virtual=True,
-                                        export_name_map=True).iteritems():
-            res.update(name for name in names if not name.endswith('+'))
-        return list(res)
-
-    @property
-    def fields(self):
-        return list(self.get_fields())
-
-    @property
-    def concrete_fields(self):
-        return list(self.get_fields(include_non_concrete=False))
-
-    @property
-    def local_concrete_fields(self):
-        return self.get_fields(include_parents=False, include_non_concrete=False)
 
 
 class ThreadOptions(GmailOptions):
@@ -62,24 +42,28 @@ class ThreadOptions(GmailOptions):
         self.number_of_messages.attname = 'number_of_messages'
         self.number_of_messages.name = 'number_of_messages'
 
+        self.number_of_messages.set_attributes_from_name('number_of_messages')
+        self.af.set_attributes_from_name('af')
+
         self.pk = self.af
 
-    def get_fields(self, m2m=False, data=True, related_m2m=False, related_objects=False, virtual=False,
-                   include_parents=True, include_non_concrete=True, include_hidden=False, include_proxy=False, export_name_map=False):
+    def _get_fields(self, forward=True, reverse=True, include_parents=True,
+                    include_hidden=False):
+        from .models import Message
+        from .models import Thread
         res = []
-        if data:
+        if forward:
             res += [self.af, self.number_of_messages]
-        if related_objects:
-            from .models import Message
-            res += [Message._meta.get_field('thread').related]
+        if reverse:
+            res += [Message._meta.get_field('thread').rel]
         return res
 
-    def get_field(self, field_name, m2m=True, data=True, related_objects=False, related_m2m=False, virtual=True, **kwargs):
-        if field_name == 'id':
-            return self.af
-        if field_name == 'number_of_messages':
-            return self.number_of_messages
-        raise FieldDoesNotExist()
+    def get_field(self, field_name):
+        try:
+            return next(f for f in self._get_fields()
+                        if f.name == field_name)
+        except StopIteration:
+            raise FieldDoesNotExist()
 
 
 class MessageOptions(GmailOptions):
@@ -111,33 +95,31 @@ class MessageOptions(GmailOptions):
         self.body.attname = 'body'
         self.body.name = 'body'
 
-        from .models import Thread
-        from .models import Message
+        from .models import Thread, Message
         self.thread = ForeignKey(Thread)
-        self.thread.contribute_to_class(Message, 'thread')
+
+        self.thread.contribute_to_class(Thread, 'thread')
+        self.body.set_attributes_from_name('body')
+        self.sender.set_attributes_from_name('sender')
+        self.receiver.set_attributes_from_name('receiver')
+        self.af.set_attributes_from_name('af')
 
         self.concrete_model = Message
 
         self.pk = self.af
 
+    def _get_fields(self, reverse=True, forward=True):
+        return (self.af, self.receiver, self.sender, self.body, self.thread)
 
-    def get_fields(self, m2m=False, data=True, related_m2m=False, related_objects=False, virtual=False,
-                   include_parents=True, include_non_concrete=True, include_hidden=False, include_proxy=False, export_name_map=False):
-        if data:
-            return (self.af, self.receiver, self.sender, self.body, self.thread)
-        return tuple()
-
-    def get_field(self, field_name, m2m=True, data=True, related_objects=False, related_m2m=False, virtual=True, **kwargs):
-        if data:
-            m = {
-                'id': self.af,
-                'receiver': self.receiver,
-                'sender': self.sender,
-                'body': self.body,
-                'thread': self.thread,
-            }
-            try:
-                return m[field_name]
-            except KeyError:
-                pass
-        raise FieldDoesNotExist()
+    def get_field(self, field_name):
+        m = {
+            'id': self.af,
+            'receiver': self.receiver,
+            'sender': self.sender,
+            'body': self.body,
+            'thread': self.thread,
+        }
+        try:
+            return m[field_name]
+        except KeyError:
+            raise FieldDoesNotExist()
