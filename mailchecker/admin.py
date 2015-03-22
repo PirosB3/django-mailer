@@ -16,7 +16,7 @@ class ThreadAdmin(admin.ModelAdmin):
 
 
 class MessageAdmin(admin.ModelAdmin):
-    fields = ('sender', 'receiver', 'body')
+    fields = ('sender', 'receiver', 'body', 'snippet')
     list_display = ('id',)
     ordering = ('id',)
 

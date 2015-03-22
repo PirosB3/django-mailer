@@ -50,6 +50,7 @@ def _make_message(msg):
     return Message(
         id=msg['id'],
         thread_id=msg['threadId'],
+        snippet=msg['snippet'],
         receiver=receiver,
         sender=sender,
         body=body
