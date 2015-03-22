@@ -4,6 +4,7 @@ import mailer
 
 from .query import ThreadQuerySet, MessageQuerySet
 
+
 class GmailManager(object):
 
     def complex_filter(self, filter_obj):
@@ -27,10 +28,12 @@ class ThreadManager(GmailManager):
         all_threads = mailer.get_all_threads(self.credentials)
         for t in all_threads:
             t._meta = self.model._meta
-        return ThreadQuerySet(all_threads, credentials=self.credentials, model=self.model)
+        return ThreadQuerySet(all_threads, credentials=self.credentials,
+                              model=self.model)
 
 
 class MessageManager(GmailManager):
 
     def get_queryset(self):
-        return MessageQuerySet([], credentials=self.credentials, model=self.model)
+        return MessageQuerySet([], credentials=self.credentials,
+                               model=self.model)

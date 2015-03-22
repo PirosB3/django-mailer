@@ -55,7 +55,7 @@ class MessageQuerySet(GmailQuerySet):
         return self
 
     def count(self):
-        return 5
+        return len(self)
 
     def __len__(self):
         return len([k for k in self])

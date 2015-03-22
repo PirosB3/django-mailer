@@ -1,12 +1,11 @@
 from django.db.models.fields import (AutoField, CharField,
                                      FieldDoesNotExist, TextField)
 from django.db.models import ForeignKey
-from django.db.models.fields import FieldDoesNotExist
 from django.db.models.options import CachedPropertiesMixin
 
 
 class GmailAutoField(AutoField):
-    concrete = True
+
     def to_python(self, value):
         return value
 
@@ -17,6 +16,34 @@ class GmailOptions(CachedPropertiesMixin):
     abstract = False
     swapped = False
     virtual_fields = []
+
+    def __init__(self, *args, **kwargs):
+        self._gmail_other_fields = {}
+
+    def add_field(self, *args, **kwargs):
+        pass
+
+    def _bind(self):
+        for field_name, field in self._gmail_fields.iteritems():
+            setattr(self, field_name, field)
+            field.set_attributes_from_name(field_name)
+        self.pk = self._gmail_fields[self._gmail_pk_field]
+
+    def _get_fields(self, reverse=True, forward=True):
+        return tuple(
+            field for field_name, field in
+            sorted(list(self._gmail_fields.items()) +
+                   list(self._gmail_other_fields.items()))
+        )
+
+    def get_field(self, field_name):
+        try:
+            return self._gmail_fields[field_name]
+        except KeyError:
+            try:
+                return self._gmail_other_fields[field_name]
+            except KeyError:
+                raise FieldDoesNotExist()
 
 
 class ThreadOptions(GmailOptions):
@@ -29,41 +56,11 @@ class ThreadOptions(GmailOptions):
     object_name = 'thread'
     default_related_name = None
 
-    def add_field(self, *args, **kwargs):
-        pass
-
-    def _bind(self):
-
-        self.af = GmailAutoField()
-        self.af.attname = 'id'
-        self.af.name = 'id'
-
-        self.number_of_messages = CharField(max_length=200)
-        self.number_of_messages.attname = 'number_of_messages'
-        self.number_of_messages.name = 'number_of_messages'
-
-        self.number_of_messages.set_attributes_from_name('number_of_messages')
-        self.af.set_attributes_from_name('af')
-
-        self.pk = self.af
-
-    def _get_fields(self, forward=True, reverse=True, include_parents=True,
-                    include_hidden=False):
-        from .models import Message
-        from .models import Thread
-        res = []
-        if forward:
-            res += [self.af, self.number_of_messages]
-        if reverse:
-            res += [Message._meta.get_field('thread').rel]
-        return res
-
-    def get_field(self, field_name):
-        try:
-            return next(f for f in self._get_fields()
-                        if f.name == field_name)
-        except StopIteration:
-            raise FieldDoesNotExist()
+    _gmail_pk_field = 'id'
+    _gmail_fields = {
+        'id': GmailAutoField(),
+        'number_of_messages': CharField(max_length=200),
+    }
 
 
 class MessageOptions(GmailOptions):
@@ -75,51 +72,20 @@ class MessageOptions(GmailOptions):
     object_name = 'message'
     default_related_name = None
 
-    def add_field(self, *args, **kwargs):
-        pass
+    _gmail_pk_field = 'id'
+    _gmail_fields = {
+        'id': GmailAutoField(),
+        'receiver': CharField(max_length=200),
+        'sender': CharField(max_length=200),
+        'snippet': CharField(max_length=200),
+        'body': TextField(),
+    }
 
     def _bind(self):
-        self.af = GmailAutoField()
-        self.af.attname = 'id'
-        self.af.name = 'id'
-
-        self.receiver = CharField(max_length=200)
-        self.receiver.attname = 'receiver'
-        self.receiver.name = 'receiver'
-
-        self.sender = CharField(max_length=200)
-        self.sender.attname = 'sender'
-        self.sender.name = 'sender'
-
-        self.body = TextField()
-        self.body.attname = 'body'
-        self.body.name = 'body'
+        super(MessageOptions, self)._bind()
 
         from .models import Thread, Message
         self.thread = ForeignKey(Thread)
-
         self.thread.contribute_to_class(Thread, 'thread')
-        self.body.set_attributes_from_name('body')
-        self.sender.set_attributes_from_name('sender')
-        self.receiver.set_attributes_from_name('receiver')
-        self.af.set_attributes_from_name('af')
-
         self.concrete_model = Message
-
-        self.pk = self.af
-
-    def _get_fields(self, reverse=True, forward=True):
-        return (self.af, self.receiver, self.sender, self.body, self.thread)
-
-    def get_field(self, field_name):
-        m = {
-            'id': self.af,
-            'receiver': self.receiver,
-            'sender': self.sender,
-            'body': self.body,
-            'thread': self.thread,
-        }
-        try:
-            return m[field_name]
-        except KeyError:
-            raise FieldDoesNotExist()
+        self._gmail_other_fields['thread'] = self.thread
