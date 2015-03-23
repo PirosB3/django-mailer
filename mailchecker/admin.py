@@ -15,11 +15,4 @@ class ThreadAdmin(admin.ModelAdmin):
     ordering = ('id',)
 
 
-class MessageAdmin(admin.ModelAdmin):
-    fields = ('sender', 'receiver', 'body', 'snippet')
-    list_display = ('id',)
-    ordering = ('id',)
-
-
-admin.site.register([Message], MessageAdmin)
 admin.site.register([Thread], ThreadAdmin)

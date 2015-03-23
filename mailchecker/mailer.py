@@ -12,21 +12,15 @@ class Bunch(object):
         self.__dict__ = kwargs
         self.pk = self.id
 
+    def __unicode__(self):
+        return self.id
+
     def serializable_value(self, field_name):
         try:
             field = self._meta.get_field(field_name)
         except FieldDoesNotExist:
             return getattr(self, field_name)
         return getattr(self, field.attname)
-
-
-class Thread(Bunch):
-    def __unicode__(self):
-        return self.id
-
-
-class Message(Bunch):
-    pass
 
 
 def _get_gmail_service(credentials):
@@ -47,7 +41,7 @@ def _make_message(msg):
               if h['name'] == 'From'][0]
     receiver = [h['value'] for h in msg['payload']['headers']
                 if h['name'] == 'To'][0]
-    return Message(
+    return Bunch(
         id=msg['id'],
         thread_id=msg['threadId'],
         snippet=msg['snippet'],
@@ -72,7 +66,7 @@ def get_all_threads(credentials):
     threads = gmail.users().threads().list(
         userId=ME,
     ).execute()['threads']
-    return tuple(Thread(id=t['id'], number_of_messages=None) for t in threads)
+    return tuple(Bunch(id=t['id'], number_of_messages=None) for t in threads)
 
 
 def get_all_messages(credentials):
@@ -89,7 +83,7 @@ def get_thread_by_id(credentials, thread_id):
         userId=ME,
         id=thread_id
     ).execute()
-    return Thread(
+    return Bunch(
         id=thread['id'],
         number_of_messages=len(thread['messages'])
     )
