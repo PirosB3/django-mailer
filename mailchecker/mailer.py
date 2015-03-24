@@ -69,7 +69,7 @@ def get_all_threads(credentials, to=None):
     if to:
         params['q'] = 'to:%s' % to
     threads = gmail.users().threads().list(**params).execute()
-    if not threads or threads['resultSizeEstimate'] is 0:
+    if not threads or (to != None and threads['resultSizeEstimate'] is 0):
         return tuple()
     return tuple(Bunch(id=t['id'], number_of_messages=None) for t in threads['threads'])
 
