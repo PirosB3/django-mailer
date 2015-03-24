@@ -6,17 +6,19 @@ class GmailQuery(object):
     order_by = tuple()
 
 
-class GmailQuerySet(list):
+class GmailQuerySet(object):
 
     def using(self, db):
         return self
 
     def __init__(self, *args, **kwargs):
+        self._cache = None
         self.ordered = True
         self.model = kwargs.pop('model')
         self.credentials = kwargs.pop('credentials')
-        super(GmailQuerySet, self).__init__(*args, **kwargs)
+        self.mailer = kwargs.pop('mailer', mailer)
         self.query = GmailQuery()
+        super(GmailQuerySet, self).__init__(*args, **kwargs)
 
     def order_by(self, *args, **kwargs):
         return self
@@ -28,7 +30,13 @@ class GmailQuerySet(list):
         return self
 
     def count(self):
-        return len(self)
+        return len(self._get_data())
+
+    def __getitem__(self, k):
+        return self._get_data()[k]
+
+    def all(self):
+        return self._get_data()
 
 
 class ThreadQuerySet(GmailQuerySet):
@@ -39,6 +47,14 @@ class ThreadQuerySet(GmailQuerySet):
         thread._meta = self.model._meta
         thread._state = self.model._state
         return thread
+
+    def _get_data(self):
+        if not self._cache:
+            all_threads = self.mailer.get_all_threads(self.credentials)
+            for t in all_threads:
+                t._meta = self.model._meta
+            self._cache = all_threads
+        return self._cache
 
     def filter(self, *args, **kwargs):
         if len(args) == 0:

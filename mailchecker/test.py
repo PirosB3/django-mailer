@@ -2,8 +2,47 @@ import unittest
 import mailer
 
 from django.conf import settings
-
 from oauth2client.file import Storage
+
+from .models import Thread, Message
+from .query import ThreadQuerySet
+import mock
+from mailer import Bunch
+
+class ThreadQuerySetTestCase(unittest.TestCase):
+
+    def setUp(self):
+        storage = Storage(settings.CREDENTIALS_PATH)
+        self.credentials = storage.get()
+
+    def test_queryset(self):
+        mailer = mock.MagicMock()
+        mailer.get_all_threads.return_value = [
+            Bunch(id='1'),
+            Bunch(id='2'),
+            Bunch(id='3'),
+        ]
+
+        tqs = ThreadQuerySet(
+            model=Thread,
+            credentials = self.credentials,
+            mailer = mailer
+        )
+        self.assertEqual(tqs.count(), 3)
+        self.assertEqual(tqs[1].id, '2')
+        self.assertTrue([
+            model._meta
+            for model in tqs.all()
+        ])
+
+class ThreadTestCase(unittest.TestCase):
+
+    def test_thread_select_all(self):
+        threads = Thread.objects.all()
+        self.assertTrue(len(threads) > 0)
+        for thread in threads:
+            self.assertTrue(thread._meta)
+            self.assertTrue(thread.id)
 
 
 class MailerTestCase(unittest.TestCase):
@@ -11,6 +50,12 @@ class MailerTestCase(unittest.TestCase):
     def setUp(self):
         storage = Storage(settings.CREDENTIALS_PATH)
         self.credentials = storage.get()
+
+    def test_can_get_all_threads_with_to_filter(self):
+        threads = mailer.get_all_threads(self.credentials,
+                                         to='shogun-list@shogun-toolbox.org')
+        self.assertTrue(threads)
+        self.assertTrue(all(len(t.id) > 1 for t in threads))
 
     def test_can_get_all_threads(self):
         threads = mailer.get_all_threads(self.credentials)
