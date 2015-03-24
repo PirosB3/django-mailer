@@ -12,6 +12,7 @@ class ThreadAdmin(admin.ModelAdmin):
     ]
     fields = ('number_of_messages',)
     list_display = ('id',)
+    search_fields = ('to',)
     ordering = ('id',)
 
 

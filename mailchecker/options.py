@@ -59,6 +59,7 @@ class ThreadOptions(GmailOptions):
     _gmail_pk_field = 'id'
     _gmail_fields = {
         'id': GmailAutoField(),
+        'to': CharField(max_length=200),
         'number_of_messages': CharField(max_length=200),
     }
 

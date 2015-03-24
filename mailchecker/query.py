@@ -27,6 +27,9 @@ class GmailQuerySet(list):
     def _clone(self, *args, **kwargs):
         return self
 
+    def count(self):
+        return len(self)
+
 
 class ThreadQuerySet(GmailQuerySet):
 
@@ -36,6 +39,31 @@ class ThreadQuerySet(GmailQuerySet):
         thread._meta = self.model._meta
         thread._state = self.model._state
         return thread
+
+    def filter(self, *args, **kwargs):
+        if len(args) == 0:
+            return super(ThreadQuerySet, self).filter(*args, **kwargs)
+
+        q = dict(args[0].children)
+        if 'to__icontains' in q:
+            all_threads = mailer.get_all_threads(self.credentials, to=q['to__icontains'])
+        else:
+            all_threads = mailer.get_all_threads(self.credentials)
+        for t in all_threads:
+            t._meta = self.model._meta
+
+        return ThreadQuerySet(
+            all_threads,
+            model=self.model,
+            credentials=self.credentials,
+        )
+
+    #def __iter__(self):
+        #try:
+            #return iter(self._cache)
+        #except AttributeError:
+            #pass
+
 
 
 class MessageQuerySet(GmailQuerySet):
@@ -54,8 +82,6 @@ class MessageQuerySet(GmailQuerySet):
             )
         return self
 
-    def count(self):
-        return len(self)
 
     def __len__(self):
         return len([k for k in self])

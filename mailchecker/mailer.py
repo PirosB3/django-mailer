@@ -61,12 +61,17 @@ def get_messages_by_thread_id(credentials, thread_id):
     return map(_make_message, thread['messages'])
 
 
-def get_all_threads(credentials):
+def get_all_threads(credentials, to=None):
     gmail = _get_gmail_service(credentials)
-    threads = gmail.users().threads().list(
-        userId=ME,
-    ).execute()['threads']
-    return tuple(Bunch(id=t['id'], number_of_messages=None) for t in threads)
+    params = {
+        'userId': ME,
+    }
+    if to:
+        params['q'] = 'to:%s' % to
+    threads = gmail.users().threads().list(**params).execute()
+    if not threads or threads['resultSizeEstimate'] is 0:
+        return tuple()
+    return tuple(Bunch(id=t['id'], number_of_messages=None) for t in threads['threads'])
 
 
 def get_all_messages(credentials):
