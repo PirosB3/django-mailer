@@ -17,7 +17,7 @@ class GmailQuerySet(object):
         self.model = kwargs.pop('model')
         self.credentials = kwargs.pop('credentials')
         self.mailer = kwargs.pop('mailer', mailer)
-        self.filter_query = kwargs.pop('filter_query', None)
+        self.filter_query = kwargs.pop('filter_query', {})
         self.query = GmailQuery()
 
     def order_by(self, *args, **kwargs):
@@ -35,6 +35,9 @@ class GmailQuerySet(object):
     def __getitem__(self, k):
         return self._get_data()[k]
 
+    def __iter(self):
+        return iter(self._get_data())
+
     def all(self):
         return self._get_data()
 
@@ -43,26 +46,43 @@ class GmailQuerySet(object):
         instance._state = self.model._state
         return instance
 
+    def _get_filter_args(self, args, kwargs):
+        filter_args = kwargs if kwargs else {}
+        if len(args) > 0:
+            filter_args.update(dict(args[0].children))
+        return filter_args
+
 
 class ThreadQuerySet(GmailQuerySet):
 
     def get(self, *args, **kwargs):
-        thread_id = kwargs['id']
-        thread = self.mailer.get_thread_by_id(self.credentials,
-                                              thread_id)
-        return self._set_model_attrs(thread)
+        filter_args = self._get_filter_args(args, kwargs)
+        if 'id' not in filter_args:
+            raise Exception("No ID found in Thread GET")
+
+        return ThreadQuerySet(
+            model=self.model,
+            credentials = self.credentials,
+            mailer = self.mailer,
+            filter_query = {'id': filter_args['id']}
+        )[0]
 
     def _get_data(self):
         if not self._cache:
-            to = self.filter_query['to__icontains'] if self.filter_query else None
-            all_threads = self.mailer.get_all_threads(self.credentials, to=to)
-            self._cache = map(self._set_model_attrs, all_threads)
+            if 'id' in self.filter_query:
+                thread = self.mailer.get_thread_by_id(self.credentials,
+                                                      self.filter_query['id'])
+                self._cache = [self._set_model_attrs(thread)]
+            else:
+                to = (self.filter_query['to__icontains']
+                      if 'to__icontains' in self.filter_query
+                      else None)
+                all_threads = self.mailer.get_all_threads(self.credentials, to=to)
+                self._cache = map(self._set_model_attrs, all_threads)
         return self._cache
 
     def filter(self, *args, **kwargs):
-        filter_args = kwargs if kwargs else {}
-        if len(args) > 0:
-            filter_args.update(dict(args[0].children))
+        filter_args = self._get_filter_args(args, kwargs)
         if 'to__icontains' in filter_args:
             return ThreadQuerySet(
                 model=self.model,
@@ -75,45 +95,28 @@ class ThreadQuerySet(GmailQuerySet):
 
 class MessageQuerySet(GmailQuerySet):
 
-    def __init__(self, *args, **kwargs):
-        self.selected_thread = kwargs.pop('selected_thread', None)
-        super(MessageQuerySet, self).__init__(*args, **kwargs)
-
     def filter(self, *args, **kwargs):
-        selected_thread = kwargs.pop('thread', None)
-        if selected_thread:
+        filter_args = self._get_filter_args(args, kwargs)
+        if 'thread' in filter_args:
             return MessageQuerySet(
                 model=self.model,
                 credentials=self.credentials,
-                selected_thread=selected_thread
+                mailer=self.mailer,
+                filter_query = {'thread': filter_args['thread']}
             )
         return self
 
-
-    def __len__(self):
-        return len([k for k in self])
-
-    def __getitem__(self, n):
-        return [k for k in self][n]
-
-    def __iter__(self):
-        try:
-            return iter(self._cache)
-        except AttributeError:
-            pass
-
-        if not self.selected_thread:
-            return super(MessageQuerySet, self).__iter__()
-
-        messages = mailer.get_messages_by_thread_id(
-            self.credentials,
-            self.selected_thread.id
-        )
-        for m in messages:
-            m._meta = self.model._meta
-            m._state = self.model._state
-        self._cache = messages
-        return iter(messages)
+    def _get_data(self):
+        if not self._cache:
+            if not 'thread' in self.filter_query:
+                self._cache = []
+            else:
+                messages = self.mailer.get_messages_by_thread_id(
+                    self.credentials,
+                    self.filter_query['thread']
+                )
+                self._cache = map(self._set_model_attrs, messages)
+        return self._cache
 
     def get(self, *args, **kwargs):
         message_id = kwargs['pk']
