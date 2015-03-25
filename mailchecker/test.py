@@ -6,9 +6,47 @@ from django.db.models import Q
 from oauth2client.file import Storage
 
 from .models import Thread, Message
-from .query import ThreadQuerySet
+from .query import ThreadQuerySet, MessageQuerySet
 import mock
 from mailer import Bunch
+
+class MessageQuerySetTestCase(unittest.TestCase):
+
+    def setUp(self):
+        storage = Storage(settings.CREDENTIALS_PATH)
+        self.credentials = storage.get()
+
+    def test_message_with_filter(self):
+        mailer = mock.MagicMock()
+        mailer.get_messages_by_thread_id.return_value = [
+            Bunch(id='1'),
+        ]
+        mqs = MessageQuerySet(
+            model=Message,
+            credentials=self.credentials,
+            mailer=mailer
+        )
+        self.assertEqual(mqs.filter(thread='1')[0].pk, '1')
+        self.assertEqual(
+            mailer.get_messages_by_thread_id.call_args[0][1],
+            '1'
+        )
+
+    def test_message_with_id(self):
+        mailer = mock.MagicMock()
+        mailer.get_message_by_id.return_value = Bunch(id='1')
+        mqs = MessageQuerySet(
+            model=Message,
+            credentials=self.credentials,
+            mailer=mailer
+        )
+        self.assertEqual(mqs.get(pk='1843903').pk, '1')
+        self.assertEqual(
+            mailer.get_message_by_id.call_args[0][1],
+            '1843903'
+        )
+
+
 
 class ThreadQuerySetTestCase(unittest.TestCase):
 
@@ -94,16 +132,6 @@ class ThreadQuerySetTestCase(unittest.TestCase):
             mailer.get_all_threads.call_args_list[0][1],
             {'to': 'daniel@gmail.com'}
         )
-
-
-class ThreadTestCase(unittest.TestCase):
-
-    def test_thread_select_all(self):
-        threads = Thread.objects.all()
-        self.assertTrue(len(threads) > 0)
-        for thread in threads:
-            self.assertTrue(thread._meta)
-            self.assertTrue(thread.id)
 
 
 class MailerTestCase(unittest.TestCase):

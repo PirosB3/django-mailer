@@ -108,7 +108,11 @@ class MessageQuerySet(GmailQuerySet):
 
     def _get_data(self):
         if not self._cache:
-            if not 'thread' in self.filter_query:
+            if 'pk' in self.filter_query:
+                message = self.mailer.get_message_by_id(self.credentials,
+                                                        self.filter_query['pk'])
+                self._cache = [self._set_model_attrs(message)]
+            elif not 'thread' in self.filter_query:
                 self._cache = []
             else:
                 messages = self.mailer.get_messages_by_thread_id(
@@ -119,7 +123,14 @@ class MessageQuerySet(GmailQuerySet):
         return self._cache
 
     def get(self, *args, **kwargs):
-        message_id = kwargs['pk']
-        message = mailer.get_message_by_id(self.credentials, message_id)
-        message._meta = self.model._meta
-        return message
+
+        filter_args = self._get_filter_args(args, kwargs)
+        if 'pk' not in filter_args:
+            raise Exception("No ID found in Message GET")
+
+        return MessageQuerySet(
+            model=self.model,
+            credentials = self.credentials,
+            mailer = self.mailer,
+            filter_query = {'pk': filter_args['pk']}
+        )[0]
