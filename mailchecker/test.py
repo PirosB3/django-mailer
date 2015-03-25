@@ -35,6 +35,21 @@ class ThreadQuerySetTestCase(unittest.TestCase):
             for model in tqs.all()
         ])
 
+    def test_queryset_get(self):
+        mailer = mock.MagicMock()
+        mailer.get_thread_by_id.return_value = Bunch(id='target')
+        tqs = ThreadQuerySet(
+            model=Thread,
+            credentials = self.credentials,
+            mailer = mailer
+        )
+        self.assertEqual(tqs.get(id='target').id, 'target')
+        self.assertEqual(
+            mailer.get_thread_by_id.call_args[0][1],
+            'target'
+        )
+
+
 class ThreadTestCase(unittest.TestCase):
 
     def test_thread_select_all(self):

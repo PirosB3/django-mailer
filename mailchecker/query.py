@@ -18,7 +18,6 @@ class GmailQuerySet(object):
         self.credentials = kwargs.pop('credentials')
         self.mailer = kwargs.pop('mailer', mailer)
         self.query = GmailQuery()
-        super(GmailQuerySet, self).__init__(*args, **kwargs)
 
     def order_by(self, *args, **kwargs):
         return self
@@ -38,22 +37,24 @@ class GmailQuerySet(object):
     def all(self):
         return self._get_data()
 
+    def _set_model_attrs(self, instance):
+        instance._meta = self.model._meta
+        instance._state = self.model._state
+        return instance
+
 
 class ThreadQuerySet(GmailQuerySet):
 
     def get(self, *args, **kwargs):
         thread_id = kwargs['id']
-        thread = mailer.get_thread_by_id(self.credentials, thread_id)
-        thread._meta = self.model._meta
-        thread._state = self.model._state
-        return thread
+        thread = self.mailer.get_thread_by_id(self.credentials,
+                                              thread_id)
+        return self._set_model_attrs(thread)
 
     def _get_data(self):
         if not self._cache:
             all_threads = self.mailer.get_all_threads(self.credentials)
-            for t in all_threads:
-                t._meta = self.model._meta
-            self._cache = all_threads
+            self._cache = map(self._set_model_attrs, all_threads)
         return self._cache
 
     def filter(self, *args, **kwargs):
