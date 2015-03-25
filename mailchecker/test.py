@@ -2,6 +2,7 @@ import unittest
 import mailer
 
 from django.conf import settings
+from django.db.models import Q
 from oauth2client.file import Storage
 
 from .models import Thread, Message
@@ -47,6 +48,51 @@ class ThreadQuerySetTestCase(unittest.TestCase):
         self.assertEqual(
             mailer.get_thread_by_id.call_args[0][1],
             'target'
+        )
+
+    def test_queryset_filter(self):
+        mailer = mock.MagicMock()
+        mailer.get_all_threads.return_value = [
+            Bunch(id='target1'),
+            Bunch(id='target2'),
+        ]
+        tqs = ThreadQuerySet(
+            model=Thread,
+            credentials = self.credentials,
+            mailer = mailer
+        )
+        tqs2 = tqs.filter(to__icontains="daniel@gmail.com")
+        self.assertNotEqual(tqs, tqs2)
+
+        self.assertEqual(
+            [b.id for b in tqs2.all()],
+            ['target1', 'target2']
+        )
+        self.assertEqual(
+            mailer.get_all_threads.call_args_list[0][1],
+            {'to': 'daniel@gmail.com'}
+        )
+
+    def test_queryset_filter_Q(self):
+        mailer = mock.MagicMock()
+        mailer.get_all_threads.return_value = [
+            Bunch(id='target1'),
+            Bunch(id='target2'),
+        ]
+        tqs = ThreadQuerySet(
+            model=Thread,
+            credentials = self.credentials,
+            mailer = mailer
+        )
+        query = Q(to__icontains="daniel@gmail.com")
+        tqs2 = tqs.filter(query)
+        self.assertEqual(
+            [b.id for b in tqs2.all()],
+            ['target1', 'target2']
+        )
+        self.assertEqual(
+            mailer.get_all_threads.call_args_list[0][1],
+            {'to': 'daniel@gmail.com'}
         )
 
 

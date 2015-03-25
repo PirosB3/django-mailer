@@ -17,6 +17,7 @@ class GmailQuerySet(object):
         self.model = kwargs.pop('model')
         self.credentials = kwargs.pop('credentials')
         self.mailer = kwargs.pop('mailer', mailer)
+        self.filter_query = kwargs.pop('filter_query', None)
         self.query = GmailQuery()
 
     def order_by(self, *args, **kwargs):
@@ -53,34 +54,23 @@ class ThreadQuerySet(GmailQuerySet):
 
     def _get_data(self):
         if not self._cache:
-            all_threads = self.mailer.get_all_threads(self.credentials)
+            to = self.filter_query['to__icontains'] if self.filter_query else None
+            all_threads = self.mailer.get_all_threads(self.credentials, to=to)
             self._cache = map(self._set_model_attrs, all_threads)
         return self._cache
 
     def filter(self, *args, **kwargs):
-        if len(args) == 0:
-            return super(ThreadQuerySet, self).filter(*args, **kwargs)
-
-        q = dict(args[0].children)
-        if 'to__icontains' in q:
-            all_threads = mailer.get_all_threads(self.credentials, to=q['to__icontains'])
-        else:
-            all_threads = mailer.get_all_threads(self.credentials)
-        for t in all_threads:
-            t._meta = self.model._meta
-
-        return ThreadQuerySet(
-            all_threads,
-            model=self.model,
-            credentials=self.credentials,
-        )
-
-    #def __iter__(self):
-        #try:
-            #return iter(self._cache)
-        #except AttributeError:
-            #pass
-
+        filter_args = kwargs if kwargs else {}
+        if len(args) > 0:
+            filter_args.update(dict(args[0].children))
+        if 'to__icontains' in filter_args:
+            return ThreadQuerySet(
+                model=self.model,
+                credentials = self.credentials,
+                mailer = self.mailer,
+                filter_query = {'to__icontains': filter_args['to__icontains']}
+            )
+        return self
 
 
 class MessageQuerySet(GmailQuerySet):
