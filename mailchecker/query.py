@@ -51,6 +51,9 @@ class GmailQuerySet(object):
         if len(args) > 0:
             filter_args.update(dict(args[0].children))
         return filter_args
+    
+    def __len__(self):
+        return len(self._get_data())
 
 
 class ThreadQuerySet(GmailQuerySet):
@@ -98,11 +101,17 @@ class MessageQuerySet(GmailQuerySet):
     def filter(self, *args, **kwargs):
         filter_args = self._get_filter_args(args, kwargs)
         if 'thread' in filter_args:
+
+            try:
+                tid = filter_args['thread'].id
+            except AttributeError:
+                tid = filter_args['thread']
+
             return MessageQuerySet(
                 model=self.model,
                 credentials=self.credentials,
                 mailer=self.mailer,
-                filter_query = {'thread': filter_args['thread']}
+                filter_query = {'thread': tid}
             )
         return self
 

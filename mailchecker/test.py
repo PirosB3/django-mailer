@@ -47,7 +47,6 @@ class MessageQuerySetTestCase(unittest.TestCase):
         )
 
 
-
 class ThreadQuerySetTestCase(unittest.TestCase):
 
     def setUp(self):
