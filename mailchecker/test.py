@@ -11,6 +11,31 @@ import mock
 from mailer import Bunch
 
 
+class MessageTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.mailer = mock.MagicMock()
+        self._old_mailer = Thread._default_manager.mailer
+
+        Message._default_manager.mailer = self.mailer
+        Thread._default_manager.mailer = self.mailer
+
+    def tearDown(self):
+        Message._default_manager.mailer = self._old_mailer
+        Thread._default_manager.mailer = self._old_mailer
+
+    def test_reverse_relation_works(self):
+        self.mailer.get_thread_by_id.return_value = Message(
+            id="00126"
+        )
+        t = Message(id="00125")
+        self.assertEqual(t.thread.id, "00126")
+        self.assertEqual(
+            self.mailer.get_thread_by_id.call_args[0][1],
+            '00125'
+        )
+
+
 class MessageQuerySetTestCase(unittest.TestCase):
 
     def setUp(self):

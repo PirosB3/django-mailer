@@ -23,6 +23,11 @@ class GmailModel(object):
     def pk(self):
         return self.id
 
+    def __eq__(self, other):
+        if isinstance(other, GmailModel):
+            return self.pk == other.pk
+        raise TypeError("Impossible comparison")
+
 
 class constructor(type):
     def __new__(cls, name, bases, attrs):
@@ -45,7 +50,6 @@ class Message(GmailModel):
         self.sender = sender
         self.snippet = snippet
         self.body = body
-        self.thread = thread
         self.thread_id = thread_id
 
     def __unicode__(self):
@@ -53,6 +57,10 @@ class Message(GmailModel):
 
     def __repr__(self):
         return self.__unicode__()
+
+    @property
+    def thread(self):
+        return Thread.objects.get(id=self.id)
 
 
 class Thread(GmailModel):
@@ -66,7 +74,13 @@ class Thread(GmailModel):
         self.number_of_messages = number_of_messages
 
     def __unicode__(self):
-        return "Thread %s" % (self.id)
+        return "<Thread %s with %s messages>" % (
+            self.id,
+            "???" if self.number_of_messages is None else self.number_of_messages
+        )
+
+    def __repr__(self):
+        return self.__unicode__()
 
 
 Thread._meta._bind()

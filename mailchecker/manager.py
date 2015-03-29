@@ -7,10 +7,11 @@ from .query import ThreadQuerySet, MessageQuerySet
 
 class GmailManager(object):
 
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
         storage = Storage(settings.CREDENTIALS_PATH)
         self.credentials = storage.get()
         self.model = model
+        self.mailer = kwargs.get('mailer', mailer)
 
     def complex_filter(self, filter_obj):
         return self
@@ -28,8 +29,11 @@ class GmailManager(object):
         return self.get_queryset().filter(*args, **kwargs)
 
     def get_queryset(self):
-        return self.queryset(credentials=self.credentials,
-                             model=self.model)
+        return self.queryset(
+            credentials=self.credentials,
+            model=self.model,
+            mailer=self.mailer
+        )
 
     def get(self, *args, **kwargs):
         return self.get_queryset().get(*args, **kwargs)
