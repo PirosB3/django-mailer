@@ -102,4 +102,4 @@ def get_message_by_id(credentials, message_id, cls=Bunch):
         userId=ME,
         id=message_id
     ).execute()
-    return _make_message(cls, message)
+    return _make_message(message, cls)

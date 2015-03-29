@@ -31,6 +31,9 @@ class GmailManager(object):
         return self.queryset(credentials=self.credentials,
                              model=self.model)
 
+    def get(self, *args, **kwargs):
+        return self.get_queryset().get(*args, **kwargs)
+
 
 class ThreadManager(GmailManager):
     queryset = ThreadQuerySet

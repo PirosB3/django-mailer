@@ -139,7 +139,7 @@ class MessageQuerySet(GmailQuerySet):
 
         filter_args = self._get_filter_args(args, kwargs)
         if 'pk' not in filter_args:
-            raise Exception("No ID found in Message GET")
+            raise Exception("No PK found in Message GET")
 
         return MessageQuerySet(
             model=self.model,

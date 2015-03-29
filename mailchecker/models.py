@@ -48,6 +48,12 @@ class Message(GmailModel):
         self.thread = thread
         self.thread_id = thread_id
 
+    def __unicode__(self):
+        return "<Message %s: '%s..'>" % (self.id, self.snippet[:30])
+
+    def __repr__(self):
+        return self.__unicode__()
+
 
 class Thread(GmailModel):
     __metaclass__ = constructor
