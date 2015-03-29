@@ -29,7 +29,7 @@ def _get_gmail_service(credentials):
     return build('gmail', 'v1', http=http)
 
 
-def _make_message(msg):
+def _make_message(msg, cls):
     try:
         parts = [p['body'] for p in msg['payload']['parts']]
     except KeyError:
@@ -41,7 +41,7 @@ def _make_message(msg):
               if h['name'] == 'From'][0]
     receiver = [h['value'] for h in msg['payload']['headers']
                 if h['name'] == 'To'][0]
-    return Bunch(
+    return cls(
         id=msg['id'],
         thread_id=msg['threadId'],
         snippet=msg['snippet'],
@@ -51,17 +51,17 @@ def _make_message(msg):
     )
 
 
-def get_messages_by_thread_id(credentials, thread_id):
+def get_messages_by_thread_id(credentials, thread_id, cls=Bunch):
     gmail = _get_gmail_service(credentials)
     thread = gmail.users().threads().get(
         userId=ME,
         id=thread_id
     ).execute()
 
-    return map(_make_message, thread['messages'])
+    return [_make_message(m, cls) for m in thread['messages']]
 
 
-def get_all_threads(credentials, to=None):
+def get_all_threads(credentials, to=None, cls=Bunch):
     gmail = _get_gmail_service(credentials)
     params = {
         'userId': ME,
@@ -71,33 +71,35 @@ def get_all_threads(credentials, to=None):
     threads = gmail.users().threads().list(**params).execute()
     if not threads or (to != None and threads['resultSizeEstimate'] is 0):
         return tuple()
-    return tuple(Bunch(id=t['id'], number_of_messages=None) for t in threads['threads'])
+    return tuple(cls(id=t['id'], number_of_messages=None, to=None)
+                 for t in threads['threads'])
 
 
-def get_all_messages(credentials):
+def get_all_messages(credentials, cls=Bunch):
     gmail = _get_gmail_service(credentials)
     messages = gmail.users().messages().list(
         userId=ME,
     ).execute()['messages']
-    return tuple(_make_message(m) for m in messages)
+    return [_make_message(m, cls) for m in messages]
 
 
-def get_thread_by_id(credentials, thread_id):
+def get_thread_by_id(credentials, thread_id, cls=Bunch):
     gmail = _get_gmail_service(credentials)
     thread = gmail.users().threads().get(
         userId=ME,
         id=thread_id
     ).execute()
-    return Bunch(
+    return cls(
         id=thread['id'],
+        to=None,
         number_of_messages=len(thread['messages'])
     )
 
 
-def get_message_by_id(credentials, message_id):
+def get_message_by_id(credentials, message_id, cls=Bunch):
     gmail = _get_gmail_service(credentials)
     message = gmail.users().messages().get(
         userId=ME,
         id=message_id
     ).execute()
-    return _make_message(message)
+    return _make_message(cls, message)
