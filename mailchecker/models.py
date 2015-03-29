@@ -52,15 +52,16 @@ class Message(GmailModel):
         self.body = body
         self.thread_id = thread_id
 
+    @property
+    def thread(self):
+        return Thread.objects.get(id=self.id)
+
     def __unicode__(self):
         return "<Message %s: '%s..'>" % (self.id, self.snippet[:30])
 
     def __repr__(self):
         return self.__unicode__()
 
-    @property
-    def thread(self):
-        return Thread.objects.get(id=self.id)
 
 
 class Thread(GmailModel):
@@ -72,6 +73,10 @@ class Thread(GmailModel):
         self.id = id
         self.to = to
         self.number_of_messages = number_of_messages
+
+    @property
+    def messages(self):
+        return Message.objects.filter(thread=self.id)
 
     def __unicode__(self):
         return "<Thread %s with %s messages>" % (
