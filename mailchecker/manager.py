@@ -23,6 +23,9 @@ class GmailManager(object):
     def using(self, *args, **kwargs):
         return self
 
+    def iterator(self):
+        return iter(self.get_queryset())
+
     def all(self):
         return self.get_queryset()
 

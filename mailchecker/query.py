@@ -23,8 +23,18 @@ class GmailQuerySet(object):
     def order_by(self, *args, **kwargs):
         return self
 
+    def none(self, *args, **kwargs):
+        cloned_query = self._clone()
+        cloned_query.filter_query = {}
+        return cloned_query
+
     def _clone(self, *args, **kwargs):
-        return self
+        return self.__class__(
+            model=self.model,
+            credentials=self.credentials,
+            mailer=self.mailer,
+            filter_query=self.filter_query
+        )
 
     def count(self):
         return len(self._get_data())

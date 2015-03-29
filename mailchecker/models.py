@@ -26,7 +26,19 @@ class GmailModel(object):
     def __eq__(self, other):
         if isinstance(other, GmailModel):
             return self.pk == other.pk
-        raise TypeError("Impossible comparison")
+        return False
+
+    def full_clean(self, *args, **kwargs):
+        pass
+
+    def validate_unique(self, *args, **kwargs):
+        pass
+
+    def _get_unique_checks(self, *args, **kwargs):
+        return ([], [],)
+
+    def _get_pk_val(self):
+        return None
 
 
 class constructor(type):
@@ -54,7 +66,11 @@ class Message(GmailModel):
 
     @property
     def thread(self):
-        return Thread.objects.get(id=self.id)
+        return Thread.objects.get(id=self.thread_id)
+
+    @thread.setter
+    def thread(self, value):
+        self.thread_id = value.id
 
     def __unicode__(self):
         return "<Message %s: '%s..'>" % (self.id, self.snippet[:30])
@@ -62,6 +78,8 @@ class Message(GmailModel):
     def __repr__(self):
         return self.__unicode__()
 
+    def save(self, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
 
 
 class Thread(GmailModel):
@@ -86,6 +104,9 @@ class Thread(GmailModel):
 
     def __repr__(self):
         return self.__unicode__()
+
+    def save(self, *args, **kwargs):
+        pass
 
 
 Thread._meta._bind()

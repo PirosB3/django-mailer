@@ -29,6 +29,9 @@ class GmailOptions(CachedPropertiesMixin):
             field.set_attributes_from_name(field_name)
         self.pk = self._gmail_fields[self._gmail_pk_field]
 
+    def get_fields(self, **kwargs):
+        return self._get_fields()
+
     def _get_fields(self, reverse=True, forward=True):
         return tuple(
             field for field_name, field in

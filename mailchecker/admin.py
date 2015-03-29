@@ -6,6 +6,11 @@ class MessageInline(admin.TabularInline):
     model = Message
 
 
+class MessageAdmin(admin.ModelAdmin):
+    ordering = ('id',)
+    model = Message
+
+
 class ThreadAdmin(admin.ModelAdmin):
     inlines = [
         MessageInline,
@@ -17,3 +22,4 @@ class ThreadAdmin(admin.ModelAdmin):
 
 
 admin.site.register([Thread], ThreadAdmin)
+admin.site.register([Message], MessageAdmin)
