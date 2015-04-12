@@ -65,6 +65,9 @@ class GmailQuerySet(object):
     def __len__(self):
         return len(self._get_data())
 
+    def _create(self, frm, to, message_body):
+        return mailer.send_message(self.credentials, frm, to, message_body)
+
 
 class ThreadQuerySet(GmailQuerySet):
 

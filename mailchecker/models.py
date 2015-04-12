@@ -79,7 +79,23 @@ class Message(GmailModel):
         return self.__unicode__()
 
     def save(self, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
+
+        # Messages already save do not need re-sending
+        if self.id:
+            return
+
+        # Send message and fetch ID
+        result = self._default_manager.get_queryset()._create(
+            frm=self.sender,
+            to=self.receiver,
+            message_body=self.body
+        )
+
+        # Not all results are returned from the API, re-pull and set
+        # all fields (basically, reassigning the entire instance)
+        new_instance = self._default_manager.get(pk=result['id'])
+        for field_name in (f.name for f in self._meta.get_fields()):
+            setattr(self, field_name, getattr(new_instance, field_name))
 
 
 class Thread(GmailModel):

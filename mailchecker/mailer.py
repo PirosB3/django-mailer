@@ -1,5 +1,6 @@
 import httplib2
 from apiclient.discovery import build
+from email.mime.text import MIMEText
 
 import base64
 from django.db.models.fields import FieldDoesNotExist
@@ -38,9 +39,9 @@ def _make_message(msg, cls):
     body = ''.join(base64.urlsafe_b64decode(p['data'].encode('utf-8'))
                    for p in parts if 'data' in p)
     sender = [h['value'] for h in msg['payload']['headers']
-              if h['name'] == 'From'][0]
+              if h['name'].lower() in 'from'][0]
     receiver = [h['value'] for h in msg['payload']['headers']
-                if h['name'] == 'To'][0]
+                if h['name'].lower() == 'to'][0]
     return cls(
         id=msg['id'],
         thread_id=msg['threadId'],
@@ -50,6 +51,17 @@ def _make_message(msg, cls):
         body=body
     )
 
+
+def send_message(credentials, frm, to, message_body, subject="DEFAULT SUBJECT"):
+    gmail = _get_gmail_service(credentials)
+    message = MIMEText(message_body)
+    message['to'] = to
+    message['from'] = frm
+    message['subject'] = subject
+    return gmail.users().messages().send(
+        userId=ME,
+        body={'raw': base64.b64encode(message.as_string())}
+    ).execute()
 
 def get_messages_by_thread_id(credentials, thread_id, cls=Bunch):
     gmail = _get_gmail_service(credentials)
