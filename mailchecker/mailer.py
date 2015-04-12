@@ -52,15 +52,19 @@ def _make_message(msg, cls):
     )
 
 
-def send_message(credentials, frm, to, message_body, subject="DEFAULT SUBJECT"):
+def send_message(credentials, frm, to, message_body, subject="DEFAULT SUBJECT", thread_id=None):
     gmail = _get_gmail_service(credentials)
     message = MIMEText(message_body)
     message['to'] = to
     message['from'] = frm
     message['subject'] = subject
+
+    payload = {'raw': base64.b64encode(message.as_string())}
+    if thread_id:
+        payload['threadId'] = thread_id
     return gmail.users().messages().send(
         userId=ME,
-        body={'raw': base64.b64encode(message.as_string())}
+        body=payload,
     ).execute()
 
 def get_messages_by_thread_id(credentials, thread_id, cls=Bunch):

@@ -15,12 +15,12 @@ class MessageInlineForm(forms.ModelForm):
     receiver = forms.EmailField()
 
     class Meta:
-        fields = ('sender', 'receiver', 'snippet',)
+        fields = ('sender', 'receiver', 'body',)
         model = Message
         widgets = {
             'sender': forms.Textarea(attrs={'cols': 20, 'rows': 2}),
             'receiver': forms.Textarea(attrs={'cols': 20, 'rows': 2}),
-            'snippet': forms.Textarea(attrs={'cols': 80, 'rows': 2}),
+            'body': forms.Textarea(attrs={'cols': 80, 'rows': 2}),
         }
 
     def __init__(self, *args, **kwargs):

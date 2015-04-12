@@ -88,7 +88,8 @@ class Message(GmailModel):
         result = self._default_manager.get_queryset()._create(
             frm=self.sender,
             to=self.receiver,
-            message_body=self.body
+            message_body=self.body,
+            thread_id=self.thread_id
         )
 
         # Not all results are returned from the API, re-pull and set
