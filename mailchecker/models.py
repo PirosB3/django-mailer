@@ -73,7 +73,7 @@ class Message(GmailModel):
         self.thread_id = value.id
 
     def __unicode__(self):
-        return "<Message %s: '%s..'>" % (self.id, self.snippet[:30])
+        return ("<Message %s: '%s..'>" % (self.id, self.snippet[:30])).encode('utf-8')
 
     def __repr__(self):
         return self.__unicode__()
