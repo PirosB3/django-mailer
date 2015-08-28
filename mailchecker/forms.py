@@ -23,10 +23,12 @@ class MessageInlineForm(forms.ModelForm):
             'body': forms.Textarea(attrs={'cols': 80, 'rows': 2}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super(MessageInlineForm, self).__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:
-            for field_name in self._meta.fields:
-                if field_name is 'thread':
-                    continue
-                self.fields[field_name].widget.attrs['readonly'] = True
+    def clean(self):
+        cleaned_data = super(MessageInlineForm, self).clean()
+        if self.instance and self.instance.id is not None:
+            for key in ['sender', 'receiver']:
+                try:
+                    del self.errors[key]
+                except KeyError:
+                    pass
+        return cleaned_data

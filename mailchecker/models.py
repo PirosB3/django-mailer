@@ -64,6 +64,12 @@ class Message(GmailModel):
         self.body = body
         self.thread_id = thread_id
 
+        from django.utils.encoding import smart_text
+        if self.body:
+            self.body = smart_text(self.body)
+        if self.snippet:
+            self.snippet = smart_text(self.snippet)
+
     @property
     def thread(self):
         return Thread.objects.get(id=self.thread_id)
@@ -73,7 +79,9 @@ class Message(GmailModel):
         self.thread_id = value.id
 
     def __unicode__(self):
-        return ("<Message %s: '%s..'>" % (self.id, self.snippet[:30])).encode('utf-8')
+        from django.utils.encoding import smart_text
+        #return smart_text("<Message %s: '%s..'>" % (self.id, self.snippet[:30]))
+        return smart_text("<Message %s>" % self.id)
 
     def __repr__(self):
         return self.__unicode__()

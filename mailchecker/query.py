@@ -43,7 +43,8 @@ class GmailQuerySet(object):
         return self._get_data()[k]
 
     def __repr__(self):
-        return repr(self._get_data())
+        from django.utils.encoding import smart_text
+        return repr(self._get_data()).encode('utf-8')
 
     def __iter__(self):
         return iter(self._get_data())

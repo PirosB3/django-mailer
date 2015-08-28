@@ -52,7 +52,7 @@ def _make_message(msg, cls):
     )
 
 
-def send_message(credentials, frm, to, message_body, subject="DEFAULT SUBJECT", thread_id=None):
+def send_message(credentials, frm, to, message_body, subject="Hello from Pycon", thread_id=None):
     gmail = _get_gmail_service(credentials)
     message = MIMEText(message_body)
     message['to'] = to
