@@ -10,10 +10,10 @@ def main():
         ],
         redirect_uri='urn:ietf:wg:oauth:2.0:oob'
     )
-    import webbrowser
-    webbrowser.open(flow.step1_get_authorize_url())
+    print "Please go to '%s' and authorize this application" % flow.step1_get_authorize_url()
+    print "Insert the code in the 'Success' screen and press ENTER"
 
-    code = ''
+    code = raw_input()
     credentials = flow.step2_exchange(code)
 
     from oauth2client.file import Storage
